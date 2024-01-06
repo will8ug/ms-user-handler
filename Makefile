@@ -1,6 +1,9 @@
 BINARY=msuser
 OUTPUT=bin
 
+test:
+	go test
+
 local:
 	echo "Building for local binary"
 	go build -o ${OUTPUT}/${BINARY} main.go
