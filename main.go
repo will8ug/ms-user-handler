@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 
 	azidentity "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
+	graphusers "github.com/microsoftgraph/msgraph-sdk-go/users"
 )
 
 type TenantCredential struct {
@@ -20,7 +22,25 @@ func main() {
 
 	graphClient, err := initGraphClient(tenantCredential)
 	log.Println(graphClient)
-	log.Println(err)
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	requestTop := int32(2)
+	requestParameters := &graphusers.UsersRequestBuilderGetQueryParameters{
+		Top: &requestTop,
+	}
+	config := &graphusers.UsersRequestBuilderGetRequestConfiguration{
+		QueryParameters: requestParameters,
+	}
+
+	users, err := graphClient.Users().Get(context.Background(), config)
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	log.Println(users.GetValue())
+	log.Println(users.GetOdataNextLink())
 }
 
 func parseArguments() *TenantCredential {
@@ -40,6 +60,7 @@ func initGraphClient(tc *TenantCredential) (*msgraphsdk.GraphServiceClient, erro
 		nil,
 	)
 
-	graphClient, err := msgraphsdk.NewGraphServiceClientWithCredentials(cred, []string{"User.Read"})
+	scopes := []string{"https://graph.microsoft.com/.default"}
+	graphClient, err := msgraphsdk.NewGraphServiceClientWithCredentials(cred, scopes)
 	return graphClient, err
 }
