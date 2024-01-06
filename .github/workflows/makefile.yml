@@ -18,8 +18,8 @@ jobs:
       run: make clean
 
     - name: Build
-      # run: make local
-      run: make build
+      run: make local
+      # run: make build
     
     - name: Clean to save space
       run: make clean
