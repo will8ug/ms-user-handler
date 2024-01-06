@@ -19,7 +19,7 @@ func main() {
 	tenantCredential := parseArguments()
 	log.Println(*tenantCredential)
 
-	graphClient, err := initGraphClient()
+	graphClient, err := initGraphClient(tenantCredential)
 	log.Println(graphClient)
 	log.Println(err)
 }
@@ -31,16 +31,15 @@ func parseArguments() *TenantCredential {
 	password := flag.String("pwd", "password", "Password")
 	flag.Parse()
 	
-	tenantCredential := TenantCredential{*tenantId, *clientId, *username, *password}
-	return &tenantCredential
+	return &TenantCredential{*tenantId, *clientId, *username, *password}
 }
 
-func initGraphClient() (*msgraphsdk.GraphServiceClient, error) {
+func initGraphClient(tc *TenantCredential) (*msgraphsdk.GraphServiceClient, error) {
 	cred, _ := azidentity.NewUsernamePasswordCredential(
-		"tenant_id",
-		"client_id",
-		"user_name",
-		"password",
+		tc.tenantId,
+		tc.clientId,
+		tc.username,
+		tc.password,
 		nil,
 	)
 
