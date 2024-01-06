@@ -11,8 +11,7 @@ import (
 type TenantCredential struct {
 	tenantId string
 	clientId string
-	username string
-	password string
+	clientSecret string
 }
 
 func main() {
@@ -27,19 +26,17 @@ func main() {
 func parseArguments() *TenantCredential {
 	tenantId := flag.String("tid", "tenant_id", "Tenant name")
 	clientId := flag.String("cid", "client_id", "Client ID")
-	username := flag.String("user", "username", "Username")
-	password := flag.String("pwd", "password", "Password")
+	clientSecret := flag.String("csec", "client_secret", "Client secret")
 	flag.Parse()
 	
-	return &TenantCredential{*tenantId, *clientId, *username, *password}
+	return &TenantCredential{*tenantId, *clientId, *clientSecret}
 }
 
 func initGraphClient(tc *TenantCredential) (*msgraphsdk.GraphServiceClient, error) {
-	cred, _ := azidentity.NewUsernamePasswordCredential(
+	cred, _ := azidentity.NewClientSecretCredential(
 		tc.tenantId,
 		tc.clientId,
-		tc.username,
-		tc.password,
+		tc.clientSecret,
 		nil,
 	)
 
