@@ -1,6 +1,6 @@
 module will8ug/ms-user-handler
 
-go 1.21.5
+go 1.21
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.9.1 // indirect
