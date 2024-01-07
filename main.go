@@ -7,6 +7,8 @@ import (
 
 	azidentity "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
+	msgraphcore "github.com/microsoftgraph/msgraph-sdk-go-core"
+	graphmodels "github.com/microsoftgraph/msgraph-sdk-go/models"
 	graphusers "github.com/microsoftgraph/msgraph-sdk-go/users"
 )
 
@@ -21,7 +23,6 @@ func main() {
 	log.Println(*tenantCredential)
 
 	graphClient, err := initGraphClient(tenantCredential)
-	log.Println(graphClient)
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -34,13 +35,29 @@ func main() {
 		QueryParameters: requestParameters,
 	}
 
-	users, err := graphClient.Users().Get(context.Background(), config)
+	results, err := graphClient.Users().Get(context.Background(), config)
 	if err != nil {
 		log.Panicln(err)
 	}
 
-	log.Println(users.GetValue())
-	log.Println(users.GetOdataNextLink())
+	pageInterator, err := msgraphcore.NewPageIterator[graphmodels.Userable](
+		results,
+		graphClient.GetAdapter(),
+		graphmodels.CreateUserCollectionResponseFromDiscriminatorValue,
+	)
+	if err != nil {
+		log.Fatalf("Error creating page iterator: %v\n", err)
+	}
+
+	err = pageInterator.Iterate(context.Background(), func(user graphmodels.Userable) bool {
+		log.Printf("%s\n", *user.GetDisplayName())
+		// return true to continue the iteration
+		return true
+	})
+	if err != nil {
+		log.Panicln(err)
+	}
+	log.Println("Happy Ending.")
 }
 
 func parseArguments() *TenantCredential {
