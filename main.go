@@ -28,7 +28,20 @@ func main() {
 	}
 
 	travelUsersWithPaging(graphClient, int32(2), func(user graphmodels.Userable) bool {
+		log.Println()
+		log.Printf("%v\n", *user.GetId())
 		log.Printf("%s\n", *user.GetDisplayName())
+		if (user.GetJobTitle() != nil) {
+			log.Printf("%s\n", *user.GetJobTitle())
+		} else {
+			log.Println("jobTitle is null")
+		}
+		if (user.GetMobilePhone() != nil) {
+			log.Printf("%s\n", *user.GetMobilePhone())
+		} else {
+			log.Println("mobilePhone is null")
+		}
+		log.Println()
 		// return true to continue the iteration
 		return true
 	})
@@ -61,6 +74,7 @@ func initGraphClient(tc *TenantCredential) (*msgraphsdk.GraphServiceClient, erro
 func travelUsersWithPaging(client *msgraphsdk.GraphServiceClient, pageSize int32, 
 		callback func(pageItem graphmodels.Userable) bool) {
 	reqParameters := &graphusers.UsersRequestBuilderGetQueryParameters{
+		Select: []string{"id", "displayName", "jobTitle", "mobilePhone"},
 		Top: &pageSize,
 	}
 	config := &graphusers.UsersRequestBuilderGetRequestConfiguration{
