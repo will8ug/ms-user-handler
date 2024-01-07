@@ -24,39 +24,15 @@ func main() {
 
 	graphClient, err := initGraphClient(tenantCredential)
 	if err != nil {
-		log.Panicln(err)
+		log.Fatalln(err)
 	}
 
-	requestTop := int32(2)
-	requestParameters := &graphusers.UsersRequestBuilderGetQueryParameters{
-		Top: &requestTop,
-	}
-	config := &graphusers.UsersRequestBuilderGetRequestConfiguration{
-		QueryParameters: requestParameters,
-	}
-
-	results, err := graphClient.Users().Get(context.Background(), config)
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	pageInterator, err := msgraphcore.NewPageIterator[graphmodels.Userable](
-		results,
-		graphClient.GetAdapter(),
-		graphmodels.CreateUserCollectionResponseFromDiscriminatorValue,
-	)
-	if err != nil {
-		log.Fatalf("Error creating page iterator: %v\n", err)
-	}
-
-	err = pageInterator.Iterate(context.Background(), func(user graphmodels.Userable) bool {
+	travelUsersWithPaging(graphClient, int32(2), func(user graphmodels.Userable) bool {
 		log.Printf("%s\n", *user.GetDisplayName())
 		// return true to continue the iteration
 		return true
 	})
-	if err != nil {
-		log.Panicln(err)
-	}
+
 	log.Println("Happy Ending.")
 }
 
@@ -80,4 +56,33 @@ func initGraphClient(tc *TenantCredential) (*msgraphsdk.GraphServiceClient, erro
 	scopes := []string{"https://graph.microsoft.com/.default"}
 	graphClient, err := msgraphsdk.NewGraphServiceClientWithCredentials(cred, scopes)
 	return graphClient, err
+}
+
+func travelUsersWithPaging(client *msgraphsdk.GraphServiceClient, pageSize int32, 
+		callback func(pageItem graphmodels.Userable) bool) {
+	reqParameters := &graphusers.UsersRequestBuilderGetQueryParameters{
+		Top: &pageSize,
+	}
+	config := &graphusers.UsersRequestBuilderGetRequestConfiguration{
+		QueryParameters: reqParameters,
+	}
+
+	results, err := client.Users().Get(context.Background(), config)
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	pageInterator, err := msgraphcore.NewPageIterator[graphmodels.Userable](
+		results,
+		client.GetAdapter(),
+		graphmodels.CreateUserCollectionResponseFromDiscriminatorValue,
+	)
+	if err != nil {
+		log.Panicf("Error creating page iterator: %v\n", err)
+	}
+
+	err = pageInterator.Iterate(context.Background(), callback)
+	if err != nil {
+		log.Panicln(err)
+	}
 }
