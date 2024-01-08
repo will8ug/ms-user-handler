@@ -33,8 +33,8 @@ func TestParseArguments(t *testing.T) {
 
 func TestInitGraphClient(t *testing.T) {
 	tenantCredential = &TenantCredential{"tenantId", "clientId", "clientSecret"}
-	client, err := initGraphClient()
-	if err != nil || client == nil {
+	err := initGraphClient()
+	if err != nil || graphClient == nil {
 		t.Errorf(`initGraphClient() failed with %q`, err)
 	}
 }
