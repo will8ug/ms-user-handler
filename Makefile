@@ -2,7 +2,8 @@ BINARY=msuser
 OUTPUT=bin
 
 test:
-	go test
+	go test -covermode=count -coverprofile=coverage.out
+	go tool cover -func=coverage.out -o=coverage.out
 
 local:
 	echo "Building for local binary"

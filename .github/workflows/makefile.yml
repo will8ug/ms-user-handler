@@ -20,6 +20,16 @@ jobs:
     - name: Test
       run: make test
 
+    - name: Go coverage badge
+      uses: tj-actions/coverage-badge-go@v2
+      with:
+        filename: coverage.out
+
+    - name: Simply check
+      run: |
+        git status
+        git diff
+
     - name: Build
       run: make local
       # run: make build
