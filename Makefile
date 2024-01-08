@@ -2,7 +2,7 @@ BINARY=msuser
 OUTPUT=bin
 
 test:
-	go test -covermode=count -coverprofile=coverage.out
+	go test -v -covermode=count -coverprofile=coverage.out
 	go tool cover -func=coverage.out -o=coverage.out
 
 local:
