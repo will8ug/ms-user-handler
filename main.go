@@ -36,34 +36,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	travelUsersWithPaging(int32(2), func(user graphmodels.Userable) bool {
-		log.Println()
-		log.Printf("%v\n", *user.GetId())
-		log.Printf("%s\n", *user.GetDisplayName())
-		if (user.GetJobTitle() != nil) {
-			log.Printf("%s\n", *user.GetJobTitle())
-		} else if (!isDryRun) {
-			log.Println("Changing jobTitle when it's null")
-			updateJobTitle(user)
-		} else {
-			log.Println("jobTitle is null")
-		}
-		if (user.GetMobilePhone() != nil) {
-			log.Printf("%s\n", *user.GetMobilePhone())
-		} else {
-			log.Println("mobilePhone is null")
-		}
-
-		if (!isDryRun) {
-			// just don't want to make the changes in my subsequent tests
-			// so put the following lines into this "if"
-			updateExtensionProperties(user)
-		}
-		
-		log.Println()
-		// return true to continue the iteration
-		return true
-	})
+	travelUsersWithPaging(int32(2))
 
 	log.Println("Happy Ending.")
 }
@@ -94,7 +67,7 @@ func initGraphClient() (err error) {
 	return err
 }
 
-func travelUsersWithPaging(pageSize int32, callback func(pageItem graphmodels.Userable) bool) {
+func travelUsersWithPaging(pageSize int32) {
 	reqParameters := &graphusers.UsersRequestBuilderGetQueryParameters{
 		Select: []string{"id", "displayName", "jobTitle", "mobilePhone"},
 		Top: &pageSize,
@@ -117,10 +90,37 @@ func travelUsersWithPaging(pageSize int32, callback func(pageItem graphmodels.Us
 		log.Panicf("Error creating page iterator: %v\n", err)
 	}
 
-	err = pageInterator.Iterate(context.Background(), callback)
+	err = pageInterator.Iterate(context.Background(), handleSingleUser)
 	if err != nil {
 		log.Panicln(err)
 	}
+}
+
+func handleSingleUser(user graphmodels.Userable) bool {
+	log.Println()
+	log.Printf("%v\n", *user.GetId())
+	log.Printf("%s\n", *user.GetDisplayName())
+	if (user.GetJobTitle() != nil) {
+		log.Printf("%s\n", *user.GetJobTitle())
+	} else if (!isDryRun) {
+		log.Println("Changing jobTitle when it's null")
+		updateJobTitle(user)
+	} else {
+		log.Println("jobTitle is null")
+	}
+	if (user.GetMobilePhone() != nil) {
+		log.Printf("%s\n", *user.GetMobilePhone())
+	} else {
+		log.Println("mobilePhone is null")
+	}
+
+	if (!isDryRun) {
+		updateExtensionProperties(user)
+	}
+	
+	log.Println()
+	// return true to continue the iteration
+	return true
 }
 
 func updateJobTitle(user graphmodels.Userable) (err error) {
