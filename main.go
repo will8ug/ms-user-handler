@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 
 	azidentity "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
@@ -18,9 +19,13 @@ type TenantCredential struct {
 	clientSecret string
 }
 
+var b2cExtensionAppId string
+var isDryRun bool = true
+
 func main() {
 	tenantCredential := parseArguments()
 	log.Println(*tenantCredential)
+	log.Printf("Is dry run: %v", isDryRun)
 
 	graphClient, err := initGraphClient(tenantCredential)
 	if err != nil {
@@ -33,20 +38,34 @@ func main() {
 		log.Printf("%s\n", *user.GetDisplayName())
 		if (user.GetJobTitle() != nil) {
 			log.Printf("%s\n", *user.GetJobTitle())
-		} else {
+		} else if (!isDryRun) {
 			log.Println("Changing jobTitle when it's null")
 			userPatch := graphmodels.NewUser()
 			newJobTitle := "PatchedJobTitle"
 			userPatch.SetJobTitle(&newJobTitle)
 			graphClient.Users().ByUserId(*user.GetId()).Patch(context.Background(), userPatch, nil)
+			log.Printf(">> New jobTitle: %v", newJobTitle)
+		} else {
+			log.Println("jobTitle is null")
 		}
 		if (user.GetMobilePhone() != nil) {
 			log.Printf("%s\n", *user.GetMobilePhone())
 		} else {
 			log.Println("mobilePhone is null")
 		}
-		log.Println()
 
+		if (!isDryRun) {
+			// just don't want to make the changes in my subsequent tests
+			// so put the following lines into this "if"
+			extUserPatch := graphmodels.NewUser()
+			additionalData := map[string]interface{} {
+				fmt.Sprintf("extension_%s_optIn", b2cExtensionAppId): "false",
+			}
+			extUserPatch.SetAdditionalData(additionalData)
+			graphClient.Users().ByUserId(*user.GetId()).Patch(context.Background(), extUserPatch, nil)
+		}
+		
+		log.Println()
 		// return true to continue the iteration
 		return true
 	})
@@ -55,11 +74,15 @@ func main() {
 }
 
 func parseArguments() *TenantCredential {
-	tenantId := flag.String("tid", "tenant_id", "Tenant name")
-	clientId := flag.String("cid", "client_id", "Client ID")
-	clientSecret := flag.String("csec", "client_secret", "Client secret")
+	dryRun := flag.Bool("dryrun", true, "Dry run: true/false; default to true")
+	tenantId := flag.String("tid", "", "Tenant ID")
+	clientId := flag.String("cid", "", "Client ID")
+	clientSecret := flag.String("csec", "", "Client secret")
+	extappid := flag.String("extappid", "", "B2C extension application ID")
 	flag.Parse()
 	
+	isDryRun = *dryRun
+	b2cExtensionAppId = *extappid
 	return &TenantCredential{*tenantId, *clientId, *clientSecret}
 }
 
