@@ -34,7 +34,11 @@ func main() {
 		if (user.GetJobTitle() != nil) {
 			log.Printf("%s\n", *user.GetJobTitle())
 		} else {
-			log.Println("jobTitle is null")
+			log.Println("Changing jobTitle when it's null")
+			userPatch := graphmodels.NewUser()
+			newJobTitle := "PatchedJobTitle"
+			userPatch.SetJobTitle(&newJobTitle)
+			graphClient.Users().ByUserId(*user.GetId()).Patch(context.Background(), userPatch, nil)
 		}
 		if (user.GetMobilePhone() != nil) {
 			log.Printf("%s\n", *user.GetMobilePhone())
@@ -42,6 +46,7 @@ func main() {
 			log.Println("mobilePhone is null")
 		}
 		log.Println()
+
 		// return true to continue the iteration
 		return true
 	})
