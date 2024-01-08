@@ -19,15 +19,18 @@ type TenantCredential struct {
 	clientSecret string
 }
 
-var b2cExtensionAppId string
-var isDryRun bool = true
+var (
+	b2cExtensionAppId string = ""
+	isDryRun bool = true
+	tenantCredential *TenantCredential = nil
+)
 
 func main() {
-	tenantCredential := parseArguments()
+	parseArguments()
 	log.Println(*tenantCredential)
 	log.Printf("Is dry run: %v", isDryRun)
 
-	graphClient, err := initGraphClient(tenantCredential)
+	graphClient, err := initGraphClient()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -64,7 +67,7 @@ func main() {
 	log.Println("Happy Ending.")
 }
 
-func parseArguments() *TenantCredential {
+func parseArguments() {
 	dryRun := flag.Bool("dryrun", true, "Dry run: true/false; default to true")
 	tenantId := flag.String("tid", "", "Tenant ID")
 	clientId := flag.String("cid", "", "Client ID")
@@ -74,14 +77,14 @@ func parseArguments() *TenantCredential {
 	
 	isDryRun = *dryRun
 	b2cExtensionAppId = *extappid
-	return &TenantCredential{*tenantId, *clientId, *clientSecret}
+	tenantCredential = &TenantCredential{*tenantId, *clientId, *clientSecret}
 }
 
-func initGraphClient(tc *TenantCredential) (*msgraphsdk.GraphServiceClient, error) {
+func initGraphClient() (*msgraphsdk.GraphServiceClient, error) {
 	cred, _ := azidentity.NewClientSecretCredential(
-		tc.tenantId,
-		tc.clientId,
-		tc.clientSecret,
+		tenantCredential.tenantId,
+		tenantCredential.clientId,
+		tenantCredential.clientSecret,
 		nil,
 	)
 
