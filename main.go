@@ -40,11 +40,7 @@ func main() {
 			log.Printf("%s\n", *user.GetJobTitle())
 		} else if (!isDryRun) {
 			log.Println("Changing jobTitle when it's null")
-			userPatch := graphmodels.NewUser()
-			newJobTitle := "PatchedJobTitle"
-			userPatch.SetJobTitle(&newJobTitle)
-			graphClient.Users().ByUserId(*user.GetId()).Patch(context.Background(), userPatch, nil)
-			log.Printf(">> New jobTitle: %v", newJobTitle)
+			updateJobTitle(graphClient, user)
 		} else {
 			log.Println("jobTitle is null")
 		}
@@ -57,12 +53,7 @@ func main() {
 		if (!isDryRun) {
 			// just don't want to make the changes in my subsequent tests
 			// so put the following lines into this "if"
-			extUserPatch := graphmodels.NewUser()
-			additionalData := map[string]interface{} {
-				fmt.Sprintf("extension_%s_optIn", b2cExtensionAppId): "false",
-			}
-			extUserPatch.SetAdditionalData(additionalData)
-			graphClient.Users().ByUserId(*user.GetId()).Patch(context.Background(), extUserPatch, nil)
+			updateExtensionProperties(graphClient, user)
 		}
 		
 		log.Println()
@@ -127,4 +118,24 @@ func travelUsersWithPaging(client *msgraphsdk.GraphServiceClient, pageSize int32
 	if err != nil {
 		log.Panicln(err)
 	}
+}
+
+func updateJobTitle(client *msgraphsdk.GraphServiceClient, user graphmodels.Userable) (err error) {
+	userPatch := graphmodels.NewUser()
+	newJobTitle := "PatchedJobTitle"
+	userPatch.SetJobTitle(&newJobTitle)
+	_, err = client.Users().ByUserId(*user.GetId()).Patch(context.Background(), userPatch, nil)
+	log.Printf(">> New jobTitle: %v", newJobTitle)
+	return
+}
+
+func updateExtensionProperties(client *msgraphsdk.GraphServiceClient, user graphmodels.Userable) (err error) {
+	extUserPatch := graphmodels.NewUser()
+	additionalData := map[string]interface{} {
+		fmt.Sprintf("extension_%s_optIn", b2cExtensionAppId): "false",
+	}
+	extUserPatch.SetAdditionalData(additionalData)
+	log.Printf("Trying to update extension properties: %v", additionalData)
+	_, err = client.Users().ByUserId(*user.GetId()).Patch(context.Background(), extUserPatch, nil)
+	return
 }
