@@ -19,6 +19,11 @@ jobs:
 
     - name: Test
       run: make test
+    
+    - name: Generate coverage badges
+      run: |
+        bash generate-coverage.sh
+        ls -l badges
 
     - name: Build
       run: make local
