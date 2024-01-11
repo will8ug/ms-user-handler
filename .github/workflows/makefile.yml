@@ -25,6 +25,21 @@ jobs:
         bash generate-coverage.sh
         ls -l badges
 
+    - name: Upload coverage badges
+      id: upload-coverage-badges
+      if: ${{ hashFiles('./badges') != '' }}
+      uses: cpina/github-action-push-to-another-repository@main
+      continue-on-error: true
+      env:
+        SSH_DEPLOY_KEY: ${{ secrets.STATIC_PAGES_DEPLOY_KEY }}
+      with:
+        source-directory: 'badges'
+        destination-github-username: 'adb2cfocus'
+        destination-repository-name: 'static-pages'
+        user-email: "yzj_000@163.com"
+        target-branch: main
+        target-directory: "/will8ug/ms-user-handler/main/badges"
+
     - name: Build
       run: make local
     
