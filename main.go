@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	azidentity "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	msgraphcore "github.com/microsoftgraph/msgraph-sdk-go-core"
 	graphmodels "github.com/microsoftgraph/msgraph-sdk-go/models"
@@ -14,16 +14,16 @@ import (
 )
 
 type TenantCredential struct {
-	tenantId string
-	clientId string
+	tenantId     string
+	clientId     string
 	clientSecret string
 }
 
 var (
-	b2cExtensionAppId string = ""
-	isDryRun bool = true
-	tenantCredential *TenantCredential = nil
-	graphClient *msgraphsdk.GraphServiceClient = nil
+	b2cExtensionAppId                                = ""
+	isDryRun                                         = true
+	tenantCredential  *TenantCredential              = nil
+	graphClient       *msgraphsdk.GraphServiceClient = nil
 )
 
 func main() {
@@ -48,7 +48,7 @@ func parseArguments() {
 	clientSecret := flag.String("csec", "", "Client secret")
 	extappid := flag.String("extappid", "", "B2C extension application ID")
 	flag.Parse()
-	
+
 	isDryRun = *dryRun
 	b2cExtensionAppId = *extappid
 	tenantCredential = &TenantCredential{*tenantId, *clientId, *clientSecret}
@@ -70,7 +70,7 @@ func initGraphClient() (err error) {
 func travelUsersWithPaging(pageSize int32) {
 	reqParameters := &graphusers.UsersRequestBuilderGetQueryParameters{
 		Select: []string{"id", "displayName", "jobTitle", "mobilePhone"},
-		Top: &pageSize,
+		Top:    &pageSize,
 	}
 	config := &graphusers.UsersRequestBuilderGetRequestConfiguration{
 		QueryParameters: reqParameters,
@@ -100,24 +100,24 @@ func handleSingleUser(user graphmodels.Userable) bool {
 	log.Println()
 	log.Printf("%v\n", *user.GetId())
 	log.Printf("%s\n", *user.GetDisplayName())
-	if (user.GetJobTitle() != nil) {
+	if user.GetJobTitle() != nil {
 		log.Printf("%s\n", *user.GetJobTitle())
-	} else if (!isDryRun) {
+	} else if !isDryRun {
 		log.Println("Changing jobTitle when it's null")
 		updateJobTitle(user)
 	} else {
 		log.Println("jobTitle is null")
 	}
-	if (user.GetMobilePhone() != nil) {
+	if user.GetMobilePhone() != nil {
 		log.Printf("%s\n", *user.GetMobilePhone())
 	} else {
 		log.Println("mobilePhone is null")
 	}
 
-	if (!isDryRun) {
+	if !isDryRun {
 		updateExtensionProperties(user)
 	}
-	
+
 	log.Println()
 	// return true to continue the iteration
 	return true
@@ -134,7 +134,7 @@ func updateJobTitle(user graphmodels.Userable) (err error) {
 
 func updateExtensionProperties(user graphmodels.Userable) (err error) {
 	extUserPatch := graphmodels.NewUser()
-	additionalData := map[string]interface{} {
+	additionalData := map[string]interface{}{
 		fmt.Sprintf("extension_%s_optIn", b2cExtensionAppId): "false",
 	}
 	extUserPatch.SetAdditionalData(additionalData)
